@@ -5,6 +5,8 @@ const Listing = require("./models/listing.js");
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const path = require("path");
 const methodOverride = require("method-override");
+const ejsMate = require("ejs-mate");
+
 
 main().then(() => {
     console.log("connection successfully to DB");
@@ -18,7 +20,8 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
-
+app.engine("ejs" , ejsMate);
+app.use(express.static(path.join(__dirname , "/public")));
 
 app.get("/", (req, res) => {
     res.send("hi i am root");
@@ -46,7 +49,7 @@ app.post("/listings", async (req, res) => {
     const newlisting = new Listing(req.body.listing);
     await newlisting.save();
 
-    res.redirect("/listing");
+    res.redirect("/listings");
 });
 
 //edit route 
@@ -72,14 +75,15 @@ app.delete("/listings/:id" , async (req , res)=>{
     let {id}  = req.params;
     let deletedListing = await  Listing.findByIdAndDelete(id);
     console.log(deletedListing);
-    res.redirect("/listing");
+    res.redirect("/listings");
 });
 
 // index route
-app.get("/listing", async (req, res) => {
+app.get("/listings", async (req, res) => {
     const allListings = await Listing.find({});
     res.render("listings/index.ejs", { allListings });
 });
+
 // app.get("/testListing", async (req, res) => {
 
 //         let sample = new Listing({

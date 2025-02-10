@@ -8,7 +8,10 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
-const {listingSchema}= require("./schema.js");
+const { listingSchema } = require("./schema.js");
+const Review = require("./models/review.js");
+const { reviewSchema } = require("./schema.js");
+
 
 main().then(() => {
     console.log("connection successfully to DB");
@@ -29,14 +32,24 @@ app.get("/", (req, res) => {
     res.send("hi i am root");
 });
 
-const validateListing = (req , res,  next) =>{
-    let {error} =  listingSchema.validate(req.body);
-    if(error){
+const validateListing = (req, res, next) => {
+    let { error } = listingSchema.validate(req.body);
+    if (error) {
         let errMsg = error.details.map((el) => el.message).join(",");
-     throw new ExpressError(400 , errMsg);
-    }else{
-       next(); 
+        throw new ExpressError(400, errMsg);
+    } else {
+        next();
     }
+};
+
+const validateReview = (req , res , next ) =>{
+   let {error} = reviewSchema.validate(req.body);
+   if (error){
+    let errMsg = error.details.map((el) => el,message).join(",");
+    throw new ExpressError(400 , errMsg);
+   }else{
+    next();
+   }
 };
 // add route 
 
@@ -49,15 +62,15 @@ app.get("/listings/new", (req, res) => {
 
 app.get("/listings/:id", wrapAsync(async (req, res) => {
     let { id } = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("reviews");
     res.render("listings/show.ejs", { listing });
 
 }));
 
 // create route
 
-app.post("/listings", validateListing , wrapAsync(async (req, res) => {
-  
+app.post("/listings", validateListing, wrapAsync(async (req, res) => {
+
     const newlisting = new Listing(req.body.listing);
     await newlisting.save();
 
@@ -71,9 +84,9 @@ app.get("/listings/:id/edit", validateListing, wrapAsync(async (req, res) => {
     const listing = await Listing.findById(id);
     res.render("listings/edit.ejs", { listing });
 }));
- //update route
-app.put("/listings/:id",validateListing ,  wrapAsync(async (req, res) => {
-    
+//update route
+app.put("/listings/:id", validateListing, wrapAsync(async (req, res) => {
+
     const { id } = req.params;
     await Listing.findByIdAndUpdate(id, { ...req.body.listing });
     res.redirect(`/listings/${id}`);
@@ -90,35 +103,47 @@ app.delete("/listings/:id", wrapAsync(async (req, res) => {
     res.redirect("/listings");
 }));
 
+//review post route
+
+app.post("/listings/:id/reviews", validateReview, wrapAsync (async (req, res) => {
+
+    let listing = await Listing.findById(req.params.id);
+    let newReview = new Review( req.body.review);
+    listing.reviews.push(newReview);
+    await newReview.save();
+    await listing.save();
+
+    res.redirect(`/listings/${listing._id}`);
+}));
+
+//review delete route 
+app.delete("/listings/:id/reviews/:reviewid" , wrapAsync (async (req , res ) =>{
+     let {id , reviewid} = req.params;
+     await Listing.findByIdAndUpdate(id , {$pull : {reviews : reviewid}});
+     await Review.findByIdAndDelete(reviewid);
+     
+
+     res.redirect(`/listings/${id}`);
+
+}));
 // index route
-app.get("/listings", wrapAsync( async (req, res, next) => {
+app.get("/listings", wrapAsync(async (req, res, next) => {
     const allListings = await Listing.find({});
     res.render("listings/index.ejs", { allListings });
 }));
 
-// app.get("/testListing", async (req, res) => {
-
-//         let sample = new Listing({
-//             title: "home",
-//             description : "helep",
-//                  price : 2323, 
-//         });
-//          await sample.save();
-//         console.log("done");
-//         res.send("successfully saved");
-
-// });
-
-app.all("*" , (req, res , next ) =>{
- next(new ExpressError(404 , "Page Not Found"));
+app.all("*", (req, res, next) => {
+    next(new ExpressError(404, "Page Not Found"));
 });
 
 app.use((err, req, res, next) => {
-      let{statuscode = 500 , message = " something went wrong" }= err ;
-      res.status(statuscode).render("listings/error.ejs" , {message});
+    let { statuscode = 500, message = " something went wrong" } = err;
+    res.status(statuscode).render("listings/error.ejs", { message });
     //   res.status(statuscode).send(message);
-    
+
 });
+
+
 
 app.listen(8080, () => {
     console.log("app is listening at port 8080");

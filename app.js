@@ -8,30 +8,44 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
 const flash = require("connect-flash");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user.js");
 
 const sessionOptions = {
-    secret : "myseacretcode",
-    resave : false , 
-    saveUninitialized : true,
-    cookie : {
-        expires : Date.now() + 3 *24*60*60*100,
-        maxAge : 1000*60*60*24*3,
-        httpOnly : true 
+    secret: "myseacretcode",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        expires: Date.now() + 3 * 24 * 60 * 60 * 100,
+        maxAge: 1000 * 60 * 60 * 24 * 3,
+        httpOnly: true
     },
 };
 //use before routes
 app.use(session(sessionOptions));
 app.use(flash());
-app.use((req,res,next) =>{
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser()); //storing information
+passport.deserializeUser(User.deserializeUser());
+
+app.use((req, res, next) => {
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
-   
+
     next();
 })
 
+
+
 //routes
-const listings = require("./routes/listing.js");
-const reviews = require("./routes/review.js");
+const userRouter = require("./routes/user.js");
+const listingRouter = require("./routes/listing.js");
+const reviewRouter = require("./routes/review.js");
+const { request } = require("http");
 
 
 main().then(() => {
@@ -50,12 +64,14 @@ app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
 
 
-app.use("/listings" , listings);
-app.use("/listings/:id/reviews" , reviews);
 
+
+app.use("/listings", listingRouter);
+app.use("/listings/:id/reviews", reviewRouter);
+app.use("/", userRouter);
 
 app.get("/", (req, res) => {
-    res.cookie("great" , 'HELLOW');
+    res.cookie("great", 'HELLOW');
     res.send("hi i am root");
 });
 

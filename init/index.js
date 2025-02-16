@@ -18,14 +18,10 @@ const initdb = async () => {
     
     let data = initdata.data.map((item) => ({
         ...item,
-        image: item.image.url
+       owner: "67ae33a4a5d56ec6c95757d8"
     }));
 
-    data = data.map((obj) => ({
-        ...obj,
-        owner: "67ae33a4a5d56ec6c95757d8"
-    }));
-
+    
     await Listing.insertMany(data);
     console.log("Database initialized");
 };

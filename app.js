@@ -73,10 +73,10 @@ app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewRouter);
 app.use("/", userRouter);
 
-app.get("/", (req, res) => {
-    res.cookie("great", 'HELLOW');
-    res.send("hi i am root");
-});
+// app.get("/", (req, res) => {
+//     res.cookie("great", 'HELLOW');
+//     res.send("hi i am root");
+// });
 
 app.all("*", (req, res, next) => {
     next(new ExpressError(404, "Page Not Found"));

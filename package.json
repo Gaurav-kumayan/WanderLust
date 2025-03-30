@@ -2,14 +2,15 @@
   "engines": {
     "node": "v20.18.2"
   },
-  "name": "airbnb",
+  "name": "wanderlust",
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
-  "author": "",
+  "author": "gaurav",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
+    "start":"node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

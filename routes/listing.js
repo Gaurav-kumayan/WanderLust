@@ -26,6 +26,10 @@ router.route("/:id")
 //edit route 
 router.get("/:id/edit", isLoggedIn, isOwner ,wrapAsync(listingController.renderEditForm));
 
+router.get("/filter/:q", wrapAsync(listingController.filterListings));
+
+//Search
+// router.get("/search", wrapAsync(listingController.search));
 
 
 module.exports = router;

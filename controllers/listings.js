@@ -107,83 +107,13 @@ module.exports.destroyListing = async (req, res) => {
 }
 
 module.exports.search = async(req, res) => {
-    console.log(req.query.q);
-    let input = req.query.q.trim().replace(/\s+/g, " "); //remove start and end space
-    console.log(input);
-    if(input == "" || input == " "){
-        //search value is empty
-        req.flash("error", "Search value empty!!!");
-        res.redirect("/listings");
+    const {q}=req.query;
+    let filteredListings = await Listing.find({location: { $regex: q, $options: "i" } }).exec();
+    if (filteredListings.length==0) {
+        const categories=["Iconic cities", "Mountains", "Castles", "Amazing pools", "Camping", "Farms", "Arctic", "Domes", "Boats"];
+        const category=categories[Math.floor(Math.random()*9)];
+        filteredListings = await Listing.find({category}).exec();
     }
-
-    //convert every word first letter capital and other small
-    let data = input.split("");
-    let element = "";
-    let flag = false;
-    for(let index = 0; index < data.length; index++) {
-        if (index == 0 || flag) {
-            element = element + data[index].toUpperCase();
-        } else {
-            element = element + data[index].toLowerCase();
-        }
-        flag = data[index] == " ";
-    }
-    console.log(element);
-
-    let allListings = await Listing.find({
-        title: { $regex: element, $options: "i"},
-    });
-    if(allListings.length !=0 ){
-        res.locals.success = "Listings searched by title";
-        res.render("listings/index.ejs", {allListings});
-        return;
-    }
-    if(allListings.length == 0){
-        allListings = await Listing.find({
-            category: { $regex: element, $options: "i"},
-        }).sort({_id: -1});
-        if(allListings.length != 0) {
-            res.locals.success = "Listings searched by category";
-            res.render("listings/index.ejs", {allListings});
-            return;
-        }
-    }
-    if(allListings.length == 0) {
-        allListings = await Listing.find({
-            country: { $regex: element, $options: "i"},
-        }).sort({_id: -1});
-        if(allListings.length != 0) {
-            res.locals.success = "Listings searched by country";
-            res.render("listings/index.ejs", {allListings});
-            return;
-        }
-    }
-    if(allListings.length == 0) {
-        allListings = await Listing.find({
-            location: { $regex: element, $options: "i"},
-        }).sort({_id: -1});
-        if(allListings.length != 0) {
-            res.locals.success = "Listings searched by location";
-            res.render("listings/index.ejs", {allListings});
-            return;
-        }
-    }
-
-    const intValue = parseInt(element, 10); //10 for decimal return - int ya NaN
-    const intDec = Number.isInteger(intValue); //check intValue is number or not
-
-    if(allListings.length == 0 && intDec) {
-        allListings = await Listing.find({ price: { $lte: element }}).sort({
-            price: 1,
-        });
-        if(allListings.length != 0) {
-            res.locals.success = `Listings searched for less than Rs ${element}`;
-            res.render("listings/index.ejs", { allListings });
-            return;
-        }
-    }
-    if(allListings.length == 0) {
-        req.flash("error", "Listings is not here !!!");
-        res.redirect("/listings");
-    }
+    res.locals.success = `Listings Filtered by`;
+    res.render("listings/index.ejs", { allListings: filteredListings });
 }

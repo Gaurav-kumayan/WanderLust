@@ -17,6 +17,7 @@ router.route("/")
 // new route 
 router.get("/new", isLoggedIn, listingController.renderNewForm );
 
+router.get("/search", wrapAsync(listingController.search));
 
 router.route("/:id")
 .get(wrapAsync(listingController.showListing))
@@ -28,8 +29,7 @@ router.get("/:id/edit", isLoggedIn, isOwner ,wrapAsync(listingController.renderE
 
 router.get("/filter/:q", wrapAsync(listingController.filterListings));
 
-//Search
-// router.get("/search", wrapAsync(listingController.search));
+// Search
 
 
 module.exports = router;
